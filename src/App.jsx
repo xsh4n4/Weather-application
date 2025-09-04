@@ -1,34 +1,46 @@
-import React from 'react'; 
+import React, { useState } from 'react';
+import SearchBar from './components/SearchBar';
+import WeatherDisplay from './components/WeatherDisplay';
 import './App.css';
 
-function App({ data }) {
+function App() {
+  const [weatherData, setWeatherData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchWeather = async (location) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const apiKey = '7cff16f4aadd2bb44cb668c5a43a6e49'; // Replace with your actual API key
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}&units=metric`
+      );
+      
+      if (!response.ok) {
+        throw new Error('City not found');
+      }
+      
+      const data = await response.json();
+      setWeatherData(data);
+    } catch (err) {
+      setError(err.message);
+      setWeatherData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="weather-card">
-      <div className="weather-header">
-        <h2>{data.name}, {data.sys.country}</h2>
-      </div>
-      <div className="weather-info">
-        <div className="temperature">
-          <span className="temp-value">{Math.round(data.main.temp)}°C</span>
-          <span className="feels-like">Feels like: {Math.round(data.main.feels_like)}°C</span>
+    <div className="app-container">
+      <div className="app-content">
+        <h1 className="app-title">Weather Forecast</h1>
+        <div className="weather-container">
+          <SearchBar onSearch={fetchWeather} />
+          {weatherData && <WeatherDisplay data={weatherData} />}
         </div>
-        <div className="weather-description">
-          <img 
-            src={`http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
-            alt={data.weather[0].description}
-          />
-          <p>{data.weather[0].description}</p>
-        </div>
-        <div className="weather-details">
-          <div className="detail">
-            <span>Humidity</span>
-            <span>{data.main.humidity}%</span>
-          </div>
-          <div className="detail">
-            <span>Wind</span>
-            <span>{data.wind.speed} m/s</span>
-          </div>
-        </div>
+        {loading && <div className="loading">Loading...</div>}
+        {error && <div className="error">{error}</div>}
       </div>
     </div>
   );
